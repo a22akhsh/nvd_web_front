@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nvd-front-config
+data:
+  host_addr: https://nvd-backend:8081/v1/cve/backend/
+
+
+---
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nvd-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nvd-controller
+  template:
+    metadata:
+      labels:
+        app: nvd-controller
+    spec:
+      containers:
+      - name: nvd-controller
+        image: erakhi/nvd-controller:0.1
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: nvd-front-config
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+
+
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nvd-controller
+spec:
+  selector:
+    app: nvd-controller
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: NodePort
+
+
